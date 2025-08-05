@@ -87,6 +87,25 @@ header('Content-Type: text/html; charset=UTF-8');
         return $html;
     }
 
+    function overrideSplideCss($html){
+        $splideOverrideCSS = '
+            <style type="text/css">
+            /* Override external splide-skyblue.min.css */
+            .splide__list {
+                backface-visibility: hidden !important;
+                display: -ms-flexbox !important;
+                display: flex !important;
+                height: auto !important; 
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            </style>';
+        $insertAfter = '</head>';
+        $html = str_replace($insertAfter, $splideOverrideCSS . $insertAfter, $html);
+    
+        return $html;
+    }
+
     /**
      * Lưu nội dung vào file cache
      * @param string $content
@@ -111,7 +130,8 @@ header('Content-Type: text/html; charset=UTF-8');
             $mainContent = extractMainContent($htmlContent);
             
             $modifiedContent = modifyHTMLContent($mainContent);
-
+            $modifiedContent = overrideSplideCss($modifiedContent);
+            
             // Lưu vào file cache
             $savedFile = saveContentToFile($modifiedContent);
             
