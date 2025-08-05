@@ -1,11 +1,6 @@
 <?php
 header('Content-Type: text/html; charset=UTF-8');
 
-    if (isset($_POST['refresh'])) {
-        header('Location: ' . $_SERVER['PHP_SELF']);
-        exit();
-    }
-
     /**
      * Lấy nội dung HTML từ URL bằng cURL
      * @param mixed $url
@@ -69,6 +64,30 @@ header('Content-Type: text/html; charset=UTF-8');
     }
 
     /**
+     * Chỉnh sửa HTML: thay đổi title và loại bỏ các thẻ không cần thiết
+     * @param string $html
+     * @return string
+     */
+    function modifyHTMLContent($html) {
+        $html = preg_replace('/<title[^>]*>.*?<\/title>/i', '<title>Trường Đại học Mở Hà Nội</title>', $html);
+        $html = preg_replace('/<link[^>]*rel=["\']dns-prefetch["\'][^>]*>/i', '', $html);
+        $html = preg_replace('/<link[^>]*rel=["\']alternate["\'][^>]*type=["\']application\/rss\+xml["\'][^>]*>/i', '', $html);        
+        $html = preg_replace('/<link[^>]*rel=["\']https:\/\/api\.w\.org\/["\'][^>]*>/i', '', $html);        
+        $html = preg_replace('/<link[^>]*rel=["\']EditURI["\'][^>]*>/i', '', $html);        
+        $html = preg_replace('/<link[^>]*rel=["\']wlwmanifest["\'][^>]*>/i', '', $html);        
+        $html = preg_replace('/<meta[^>]*name=["\']generator["\'][^>]*content=["\']WordPress[^"\']*["\'][^>]*>/i', '', $html);        
+        $html = preg_replace('/<link[^>]*rel=["\']canonical["\'][^>]*>/i', '', $html);        
+        $html = preg_replace('/<link[^>]*rel=["\']shortlink["\'][^>]*>/i', '', $html);        
+        $html = preg_replace('/<link[^>]*rel=["\']alternate["\'][^>]*type=["\']application\/json\+oembed["\'][^>]*>/i', '', $html);
+        $html = preg_replace('/<link[^>]*rel=["\']alternate["\'][^>]*type=["\']text\/xml\+oembed["\'][^>]*>/i', '', $html);        
+        $html = preg_replace('/<meta[^>]*name=["\']generator["\'][^>]*content=["\']Powered by Visual Composer[^"\']*["\'][^>]*>/i', '', $html);
+        $html = preg_replace('/^\s*\n/m', '', $html);
+        $html = preg_replace('/\n\s*\n/', "\n", $html);
+                
+        return $html;
+    }
+
+    /**
      * Lưu nội dung vào file cache
      * @param string $content
      * @param string $filename
@@ -83,35 +102,21 @@ header('Content-Type: text/html; charset=UTF-8');
     try {
         // URL trang builder
         $builderUrl = 'https://conf.hou.edu.vn/builder/conf_hou_edu_vn';
-        
-        echo "<h2>Đang lấy dữ liệu từ: " . htmlspecialchars($builderUrl) . "</h2>";
-        
+                
         // Lấy HTML từ trang builder
         $htmlContent = fetchHTMLContent($builderUrl);
         
-        if ($htmlContent) {
-            echo "<div style='color: green;'>Lấy dữ liệu thành công!</div>";
-            
+        if ($htmlContent) {            
             // Trích xuất nội dung chính
             $mainContent = extractMainContent($htmlContent);
             
+            $modifiedContent = modifyHTMLContent($mainContent);
+
             // Lưu vào file cache
-            $savedFile = saveContentToFile($mainContent);
-            echo "<div style='color: blue;'>Đã lưu vào file: " . htmlspecialchars($savedFile) . "</div>";
-            
-            // Hiển thị preview
-            echo "<hr>";
-            echo "<h3>Preview nội dung đã lấy:</h3>";
-            echo "<div style='border: 1px solid #ccc; padding: 10px; max-height: 400px; overflow-y: auto;'>";
-            echo "<pre>" . htmlspecialchars(substr($mainContent, 0, 3000)) . "...</pre>";
-            echo "</div>";
+            $savedFile = saveContentToFile($modifiedContent);
             
             // Hiển thị nội dung thực tế
-            echo "<hr>";
-            echo "<h3>Nội dung được render:</h3>";
-            echo "<div style='border: 2px solid #007cba; padding: 15px;'>";
-            echo $mainContent;
-            echo "</div>";
+            echo $modifiedContent;
             
         } else {
             echo "<div style='color: red;'>Không thể lấy dữ liệu</div>";
@@ -120,13 +125,6 @@ header('Content-Type: text/html; charset=UTF-8');
     } catch (Exception $e) {
         echo "<div style='color: red;'>Lỗi: " . htmlspecialchars($e->getMessage()) . "</div>";
     }
-
-    echo "<hr>";
-    echo "<div style='display: flex; justify-content: center; margin: 20px 0;'>";
-    echo "<form method='post'>";
-    echo "<button type='submit' name='refresh' style='padding: 10px 20px; background: #007cba; color: white; border: none; cursor: pointer;'>Làm mới Dữ Liệu</button>";
-    echo "</form>";
-    echo "</div>";
 
 
 ?>
